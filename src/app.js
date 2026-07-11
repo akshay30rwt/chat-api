@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -23,6 +24,7 @@ app.use(limiter);
 
 app.use(express.json());
 app.use('/auth', authRoutes);
+app.use('messages', messageRoutes);
 app.use(errorHandler);
 
 module.exports = app;
