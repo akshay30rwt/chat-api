@@ -24,7 +24,7 @@ app.use(limiter);
 
 app.use(express.json());
 app.use('/auth', authRoutes);
-app.use('messages', messageRoutes);
+app.use('/messages', messageRoutes);
 app.use(errorHandler);
 
 module.exports = app;
