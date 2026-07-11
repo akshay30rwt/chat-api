@@ -8,38 +8,37 @@ const initSocket = (io) => {
     io.use((socket, next) => {
         const token = socket.handshake.auth.token;
 
-        if(!token) {
+        if (!token) {
             return next(new Error('No token provided'));
         }
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.user = decoded;
+            socket.userId = decoded.userId;
             next();
-        } 
-        catch(error) {
+        } catch (error) {
             next(new Error('Invalid token'));
         }
     });
 
     io.on('connection', async (socket) => {
-        console.log(`User connected: ${socket.user.userId}`);
+        console.log(`User connected: ${socket.userId}`);
 
-        onlineUsers.set(socket.user.userId, socket.id);
-        await User.findByIdAndUpdate(socket.user.userId, { isOnline: true });
+        onlineUsers.set(socket.userId, socket.id);
+        await User.findByIdAndUpdate(socket.userId, { isOnline: true });
 
         socket.on('sendMessage', async ({ receiverId, content }) => {
             const message = new Message({
-                sender: socket.user.userId,
+                sender: socket.userId,
                 receiver: receiverId,
                 content
             });
             await message.save();
 
             const receiverSocketId = onlineUsers.get(receiverId);
-            if(receiverSocketId) {
+            if (receiverSocketId) {
                 io.to(receiverSocketId).emit('receiveMessage', {
-                    senderId: socket.user.userId,
+                    senderId: socket.userId,
                     content,
                     createdAt: message.createdAt
                 });
@@ -47,9 +46,9 @@ const initSocket = (io) => {
         });
 
         socket.on('disconnect', async () => {
-            console.log(`User disconnected: ${socket.user.userId}`);
-            onlineUsers.delete(socket.user.userId);
-            await User.findByIdAndUpdate(socket.user.userId, { isOnline: false });
+            console.log(`User disconnected: ${socket.userId}`);
+            onlineUsers.delete(socket.userId);
+            await User.findByIdAndUpdate(socket.userId, { isOnline: false });
         });
     });
 };
